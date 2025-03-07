@@ -1,0 +1,1533 @@
+# Project Structure
+This is the file structure for the utility aggregator platform:
+
+/utility-aggregator
+  /pages
+    index.js
+    pdf-conversion.js
+    reminders.js
+    alarms.js
+    just-breathe.js
+    _app.js
+  /components
+    Layout.js
+    ReminderForm.js
+    AlarmForm.js
+    PDFConverter.js
+    BreathingExercise.js
+  /styles
+    globals.css
+  /backend
+    app.py
+    pdf_converter.py
+    reminder_service.py
+    alarm_service.py
+  package.json
+  next.config.js
+  requirements.txt
+  README.md
+
+# Frontend Code
+
+## pages/index.js
+```jsx
+import Head from 'next/head';
+import Link from 'next/link';
+import styles from '../styles/Home.module.css';
+
+export default function Home() {
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <Head>
+        <title>Utility Aggregator Platform</title>
+        <meta name="description" content="All your utilities in one place" />
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+
+      <main>
+        <h1 className="text-4xl font-bold mb-8 text-center">Utility Aggregator Platform</h1>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <Link href="/pdf-conversion">
+            <div className="bg-blue-100 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+              <h2 className="text-2xl font-semibold mb-2">PDF Conversion</h2>
+              <p>Convert your files to PDF format easily</p>
+            </div>
+          </Link>
+          
+          <Link href="/reminders">
+            <div className="bg-green-100 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+              <h2 className="text-2xl font-semibold mb-2">Reminders</h2>
+              <p>Set and manage your reminders</p>
+            </div>
+          </Link>
+          
+          <Link href="/alarms">
+            <div className="bg-yellow-100 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+              <h2 className="text-2xl font-semibold mb-2">Alarms</h2>
+              <p>Set alarms for important events</p>
+            </div>
+          </Link>
+          
+          <Link href="/just-breathe">
+            <div className="bg-purple-100 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+              <h2 className="text-2xl font-semibold mb-2">Just Breathe</h2>
+              <p>Take a moment for mindfulness</p>
+            </div>
+          </Link>
+        </div>
+      </main>
+    </div>
+  );
+}
+```
+
+## pages/pdf-conversion.js
+```jsx
+import { useState } from 'react';
+import { toast } from 'react-toastify';
+import Head from 'next/head';
+import PDFConverter from '../components/PDFConverter';
+import Layout from '../components/Layout';
+
+export default function PDFConversionPage() {
+  return (
+    <Layout>
+      <Head>
+        <title>PDF Conversion | Utility Aggregator</title>
+      </Head>
+      <h1 className="text-3xl font-bold mb-6">PDF Conversion Tool</h1>
+      <PDFConverter />
+    </Layout>
+  );
+}
+```
+
+## pages/reminders.js
+```jsx
+import { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
+import Head from 'next/head';
+import ReminderForm from '../components/ReminderForm';
+import Layout from '../components/Layout';
+
+export default function RemindersPage() {
+  const [reminders, setReminders] = useState([]);
+  
+  useEffect(() => {
+    // Fetch existing reminders
+    const fetchReminders = async () => {
+      try {
+        const res = await fetch('/api/reminders');
+        const data = await res.json();
+        if (data.success) {
+          setReminders(data.reminders);
+        }
+      } catch (error) {
+        console.error('Error fetching reminders:', error);
+        toast.error('Failed to load reminders');
+      }
+    };
+    
+    fetchReminders();
+  }, []);
+  
+  const handleAddReminder = async (newReminder) => {
+    try {
+      const res = await fetch('/api/reminders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newReminder),
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        setReminders([...reminders, data.reminder]);
+        toast.success('Reminder added successfully!');
+      } else {
+        toast.error(data.message || 'Failed to add reminder');
+      }
+    } catch (error) {
+      console.error('Error adding reminder:', error);
+      toast.error('Failed to add reminder');
+    }
+  };
+  
+  const handleDeleteReminder = async (id) => {
+    try {
+      const res = await fetch(`/api/reminders/${id}`, {
+        method: 'DELETE',
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        setReminders(reminders.filter(reminder => reminder.id !== id));
+        toast.success('Reminder deleted successfully!');
+      } else {
+        toast.error(data.message || 'Failed to delete reminder');
+      }
+    } catch (error) {
+      console.error('Error deleting reminder:', error);
+      toast.error('Failed to delete reminder');
+    }
+  };
+  
+  return (
+    <Layout>
+      <Head>
+        <title>Reminders | Utility Aggregator</title>
+      </Head>
+      <h1 className="text-3xl font-bold mb-6">Reminders</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Add New Reminder</h2>
+          <ReminderForm onAddReminder={handleAddReminder} />
+        </div>
+        
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Your Reminders</h2>
+          {reminders.length === 0 ? (
+            <p className="text-gray-500">You don't have any reminders yet.</p>
+          ) : (
+            <ul className="space-y-3">
+              {reminders.map((reminder) => (
+                <li key={reminder.id} className="bg-white p-4 rounded-md shadow-sm border border-gray-200">
+                  <div className="flex justify-between">
+                    <div>
+                      <h3 className="font-medium">{reminder.title}</h3>
+                      <p className="text-sm text-gray-600">{new Date(reminder.datetime).toLocaleString()}</p>
+                      {reminder.description && <p className="mt-1 text-sm">{reminder.description}</p>}
+                    </div>
+                    <button 
+                      onClick={() => handleDeleteReminder(reminder.id)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </Layout>
+  );
+}
+```
+
+## pages/alarms.js
+```jsx
+import { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
+import Head from 'next/head';
+import AlarmForm from '../components/AlarmForm';
+import Layout from '../components/Layout';
+
+export default function AlarmsPage() {
+  const [alarms, setAlarms] = useState([]);
+  
+  useEffect(() => {
+    // Fetch existing alarms
+    const fetchAlarms = async () => {
+      try {
+        const res = await fetch('/api/alarms');
+        const data = await res.json();
+        if (data.success) {
+          setAlarms(data.alarms);
+        }
+      } catch (error) {
+        console.error('Error fetching alarms:', error);
+        toast.error('Failed to load alarms');
+      }
+    };
+    
+    fetchAlarms();
+  }, []);
+  
+  const handleAddAlarm = async (newAlarm) => {
+    try {
+      const res = await fetch('/api/alarms', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newAlarm),
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        setAlarms([...alarms, data.alarm]);
+        toast.success('Alarm added successfully!');
+      } else {
+        toast.error(data.message || 'Failed to add alarm');
+      }
+    } catch (error) {
+      console.error('Error adding alarm:', error);
+      toast.error('Failed to add alarm');
+    }
+  };
+  
+  const handleDeleteAlarm = async (id) => {
+    try {
+      const res = await fetch(`/api/alarms/${id}`, {
+        method: 'DELETE',
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        setAlarms(alarms.filter(alarm => alarm.id !== id));
+        toast.success('Alarm deleted successfully!');
+      } else {
+        toast.error(data.message || 'Failed to delete alarm');
+      }
+    } catch (error) {
+      console.error('Error deleting alarm:', error);
+      toast.error('Failed to delete alarm');
+    }
+  };
+  
+  const handleToggleAlarm = async (id, isActive) => {
+    try {
+      const res = await fetch(`/api/alarms/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ isActive }),
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        setAlarms(alarms.map(alarm => 
+          alarm.id === id ? { ...alarm, isActive } : alarm
+        ));
+        toast.success(`Alarm ${isActive ? 'activated' : 'deactivated'} successfully!`);
+      } else {
+        toast.error(data.message || 'Failed to update alarm');
+      }
+    } catch (error) {
+      console.error('Error updating alarm:', error);
+      toast.error('Failed to update alarm');
+    }
+  };
+  
+  return (
+    <Layout>
+      <Head>
+        <title>Alarms | Utility Aggregator</title>
+      </Head>
+      <h1 className="text-3xl font-bold mb-6">Alarms</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Add New Alarm</h2>
+          <AlarmForm onAddAlarm={handleAddAlarm} />
+        </div>
+        
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Your Alarms</h2>
+          {alarms.length === 0 ? (
+            <p className="text-gray-500">You don't have any alarms yet.</p>
+          ) : (
+            <ul className="space-y-3">
+              {alarms.map((alarm) => (
+                <li key={alarm.id} className="bg-white p-4 rounded-md shadow-sm border border-gray-200">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="font-medium">{alarm.label}</h3>
+                      <p className="text-sm text-gray-600">{alarm.time}</p>
+                    </div>
+                    <div className="flex space-x-3">
+                      <label className="inline-flex items-center">
+                        <input 
+                          type="checkbox" 
+                          checked={alarm.isActive}
+                          onChange={(e) => handleToggleAlarm(alarm.id, e.target.checked)}
+                          className="form-checkbox h-5 w-5 text-blue-600"
+                        />
+                        <span className="ml-2 text-sm">Active</span>
+                      </label>
+                      <button 
+                        onClick={() => handleDeleteAlarm(alarm.id)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </Layout>
+  );
+}
+```
+
+## pages/just-breathe.js
+```jsx
+import { useState } from 'react';
+import Head from 'next/head';
+import BreathingExercise from '../components/BreathingExercise';
+import Layout from '../components/Layout';
+
+export default function JustBreathePage() {
+  return (
+    <Layout>
+      <Head>
+        <title>Just Breathe | Utility Aggregator</title>
+      </Head>
+      <h1 className="text-3xl font-bold mb-6">Just Breathe</h1>
+      <div className="max-w-2xl mx-auto">
+        <p className="mb-6 text-lg text-center">Take a moment to center yourself with this breathing exercise.</p>
+        <BreathingExercise />
+      </div>
+    </Layout>
+  );
+}
+```
+
+## pages/_app.js
+```jsx
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import '../styles/globals.css';
+
+function MyApp({ Component, pageProps }) {
+  return (
+    <>
+      <Component {...pageProps} />
+      <ToastContainer position="bottom-right" />
+    </>
+  );
+}
+
+export default MyApp;
+```
+
+## components/Layout.js
+```jsx
+import Link from 'next/link';
+
+export default function Layout({ children }) {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <nav className="bg-white shadow-sm">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="flex justify-between h-16">
+            <div className="flex">
+              <Link href="/" className="flex-shrink-0 flex items-center">
+                <span className="text-xl font-semibold">Utility Aggregator</span>
+              </Link>
+              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+                <Link href="/pdf-conversion" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                  PDF Conversion
+                </Link>
+                <Link href="/reminders" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                  Reminders
+                </Link>
+                <Link href="/alarms" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                  Alarms
+                </Link>
+                <Link href="/just-breathe" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                  Just Breathe
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <main className="max-w-6xl mx-auto px-4 py-8">
+        {children}
+      </main>
+    </div>
+  );
+}
+```
+
+## components/PDFConverter.js
+```jsx
+import { useState } from 'react';
+import { toast } from 'react-toastify';
+
+export default function PDFConverter() {
+  const [file, setFile] = useState(null);
+  const [loading, setLoading] = useState(false);
+  
+  const handleFileUpload = (e) => {
+    setFile(e.target.files[0]);
+  };
+  
+  const convertToPDF = async () => {
+    if (!file) {
+      toast.error("Please upload a file first");
+      return;
+    }
+    
+    setLoading(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const res = await fetch('/api/convert-pdf', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      const data = await res.json();
+      
+      if (data.success) {
+        // Create download link for converted PDF
+        const link = document.createElement('a');
+        link.href = data.pdfUrl;
+        link.download = `${file.name.split('.')[0]}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        toast.success('File converted to PDF successfully!');
+      } else {
+        toast.error(data.message || 'Error converting file to PDF');
+      }
+    } catch (error) {
+      console.error('Error converting to PDF:', error);
+      toast.error('Failed to convert file to PDF');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  return (
+    <div className="bg-white p-6 rounded-lg shadow-md">
+      <div className="mb-4">
+        <label htmlFor="file-upload" className="block text-sm font-medium text-gray-700 mb-2">
+          Select file to convert
+        </label>
+        <input
+          id="file-upload"
+          type="file"
+          accept=".doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.html,.md,.jpg,.jpeg,.png"
+          onChange={handleFileUpload}
+          className="block w-full text-sm text-gray-500 
+                    file:mr-4 file:py-2 file:px-4 
+                    file:rounded-md file:border-0 
+                    file:text-sm file:font-semibold 
+                    file:bg-blue-50 file:text-blue-700 
+                    hover:file:bg-blue-100"
+        />
+      </div>
+      
+      {file && (
+        <div className="text-sm text-gray-600 mb-4">
+          Selected file: <span className="font-medium">{file.name}</span> ({(file.size / 1024).toFixed(2)} KB)
+        </div>
+      )}
+      
+      <button
+        onClick={convertToPDF}
+        disabled={!file || loading}
+        className={`w-full px-4 py-2 rounded-md text-white font-medium 
+                  ${!file || loading 
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : 'bg-blue-600 hover:bg-blue-700'}`}
+      >
+        {loading ? 'Converting...' : 'Convert to PDF'}
+      </button>
+    </div>
+  );
+}
+```
+
+## components/ReminderForm.js
+```jsx
+import { useState } from 'react';
+
+export default function ReminderForm({ onAddReminder }) {
+  const [title, setTitle] = useState('');
+  const [datetime, setDatetime] = useState('');
+  const [description, setDescription] = useState('');
+  
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    if (!title || !datetime) {
+      return;
+    }
+    
+    onAddReminder({
+      title,
+      datetime,
+      description,
+    });
+    
+    // Reset form
+    setTitle('');
+    setDatetime('');
+    setDescription('');
+  };
+  
+  return (
+    <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md">
+      <div className="mb-4">
+        <label htmlFor="reminder-title" className="block text-sm font-medium text-gray-700 mb-1">
+          Title
+        </label>
+        <input
+          id="reminder-title"
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+          className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          placeholder="Meeting with team"
+        />
+      </div>
+      
+      <div className="mb-4">
+        <label htmlFor="reminder-datetime" className="block text-sm font-medium text-gray-700 mb-1">
+          Date & Time
+        </label>
+        <input
+          id="reminder-datetime"
+          type="datetime-local"
+          value={datetime}
+          onChange={(e) => setDatetime(e.target.value)}
+          required
+          className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+      
+      <div className="mb-6">
+        <label htmlFor="reminder-description" className="block text-sm font-medium text-gray-700 mb-1">
+          Description (optional)
+        </label>
+        <textarea
+          id="reminder-description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows="3"
+          className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          placeholder="Discuss project timeline and tasks"
+        ></textarea>
+      </div>
+      
+      <button
+        type="submit"
+        className="w-full px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+      >
+        Add Reminder
+      </button>
+    </form>
+  );
+}
+```
+
+## components/AlarmForm.js
+```jsx
+import { useState } from 'react';
+
+export default function AlarmForm({ onAddAlarm }) {
+  const [time, setTime] = useState('');
+  const [label, setLabel] = useState('');
+  const [repeatDays, setRepeatDays] = useState({
+    monday: false,
+    tuesday: false,
+    wednesday: false,
+    thursday: false,
+    friday: false,
+    saturday: false,
+    sunday: false,
+  });
+  
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    if (!time) {
+      return;
+    }
+    
+    onAddAlarm({
+      time,
+      label: label || 'Alarm',
+      repeatDays,
+      isActive: true,
+    });
+    
+    // Reset form
+    setTime('');
+    setLabel('');
+    setRepeatDays({
+      monday: false,
+      tuesday: false,
+      wednesday: false,
+      thursday: false,
+      friday: false,
+      saturday: false,
+      sunday: false,
+    });
+  };
+  
+  const toggleDay = (day) => {
+    setRepeatDays({
+      ...repeatDays,
+      [day]: !repeatDays[day],
+    });
+  };
+  
+  return (
+    <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md">
+      <div className="mb-4">
+        <label htmlFor="alarm-time" className="block text-sm font-medium text-gray-700 mb-1">
+          Time
+        </label>
+        <input
+          id="alarm-time"
+          type="time"
+          value={time}
+          onChange={(e) => setTime(e.target.value)}
+          required
+          className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+      
+      <div className="mb-4">
+        <label htmlFor="alarm-label" className="block text-sm font-medium text-gray-700 mb-1">
+          Label (optional)
+        </label>
+        <input
+          id="alarm-label"
+          type="text"
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+          className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          placeholder="Wake up"
+        />
+      </div>
+      
+      <div className="mb-6">
+        <span className="block text-sm font-medium text-gray-700 mb-2">
+          Repeat
+        </span>
+        <div className="flex flex-wrap gap-2">
+          {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => (
+            <button
+              key={day}
+              type="button"
+              onClick={() => toggleDay(day)}
+              className={`px-2 py-1 text-xs font-medium rounded-full ${
+                repeatDays[day]
+                  ? 'bg-blue-100 text-blue-800'
+                  : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+              }`}
+            >
+              {day.charAt(0).toUpperCase() + day.slice(1, 3)}
+            </button>
+          ))}
+        </div>
+      </div>
+      
+      <button
+        type="submit"
+        className="w-full px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+      >
+        Add Alarm
+      </button>
+    </form>
+  );
+}
+```
+
+## components/BreathingExercise.js
+```jsx
+import { useState, useEffect } from 'react';
+
+export default function BreathingExercise() {
+  const [phase, setPhase] = useState('inhale'); // inhale, hold, exhale
+  const [count, setCount] = useState(4);
+  const [isActive, setIsActive] = useState(false);
+  
+  // Configure breathing pattern
+  const breathingPattern = {
+    inhale: { duration: 4, nextPhase: 'hold' },
+    hold: { duration: 4, nextPhase: 'exhale' },
+    exhale: { duration: 6, nextPhase: 'inhale' },
+  };
+  
+  useEffect(() => {
+    let interval = null;
+    
+    if (isActive) {
+      interval = setInterval(() => {
+        if (count === 1) {
+          // Move to next phase
+          setPhase(breathingPattern[phase].nextPhase);
+          setCount(breathingPattern[breathingPattern[phase].nextPhase].duration);
+        } else {
+          setCount(count - 1);
+        }
+      }, 1000);
+    } else {
+      // Reset when paused
+      clearInterval(interval);
+      setPhase('inhale');
+      setCount(breathingPattern.inhale.duration);
+    }
+    
+    return () => clearInterval(interval);
+  }, [isActive, phase, count]);
+  
+  const toggleExercise = () => {
+    setIsActive(!isActive);
+  };
+  
+  const getCircleStyles = () => {
+    let scale = 1;
+    
+    if (phase === 'inhale') {
+      // Scale from 1 to 1.5 during inhale
+      scale = 1 + (0.5 * (breathingPattern.inhale.duration - count)) / breathingPattern.inhale.duration;
+    } else if (phase === 'hold') {
+      scale = 1.5; // Fully expanded during hold
+    } else if (phase === 'exhale') {
+      // Scale from 1.5 to 1 during exhale
+      scale = 1.5 - (0.5 * (breathingPattern.exhale.duration - count)) / breathingPattern.exhale.duration;
+    }
+    
+    return {
+      transform: `scale(${scale})`,
+      transition: 'transform 1s linear',
+    };
+  };
+  
+  const getInstructionText = () => {
+    if (!isActive) return 'Press start to begin';
+    return phase.charAt(0).toUpperCase() + phase.slice(1);
+  };
+  
+  return (
+    <div className="flex flex-col items-center">
+      <div className="relative mb-8">
+        <div 
+          className="w-64 h-64 rounded-full bg-blue-100 flex items-center justify-center"
+          style={getCircleStyles()}
+        >
+          <div className="text-center">
+            <div className="text-2xl font-medium text-blue-800">
+              {getInstructionText()}
+            </div>
+            {isActive && <div className="text-5xl font-bold text-blue-600 mt-2">{count}</div>}
+          </div>
+        </div>
+      </div>
+      
+      <button
+        onClick={toggleExercise}
+        className={`px-6 py-3 rounded-lg font-medium ${
+          isActive 
+            ? 'bg-red-500 hover:bg-red-600 text-white' 
+            : 'bg-blue-500 hover:bg-blue-600 text-white'
+        }`}
+      >
+        {isActive ? 'Stop' : 'Start'}
+      </button>
+      
+      <div className="mt-8 text-center text-gray-600 max-w-md">
+        <h3 className="font-medium text-lg mb-2">Instructions</h3>
+        <p className="mb-2">Find a comfortable position. As the circle expands, breathe in deeply through your nose. Hold your breath when the circle pauses. Exhale slowly through your mouth as the circle contracts.</p>
+        <p>For best results, use this exercise for 3-5 minutes whenever you need to reduce stress or anxiety.</p>
+      </div>
+    </div>
+  );
+}
+```
+
+## styles/globals.css
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
+    Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue,
+    sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+```
+
+## package.json
+```json
+{
+  "name": "utility-aggregator",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "13.0.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-toastify": "^9.1.1",
+    "pdf-lib": "^1.17.1"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.13",
+    "postcss": "^8.4.18",
+    "tailwindcss": "^3.2.1",
+    "eslint": "8.26.0",
+    "eslint-config-next": "13.0.0"
+  }
+}
+```
+
+## next.config.js
+```js
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  swcMinify: true,
+  // API routes config
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+  },
+}
+
+module.exports = nextConfig
+```
+
+# Backend Code
+
+## backend/app.py
+```python
+from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from pydantic import BaseModel
+from typing import Dict, List, Optional, Union
+import uvicorn
+import uuid
+import os
+from datetime import datetime
+
+from pdf_converter import convert_to_pdf
+from reminder_service import ReminderService
+from alarm_service import AlarmService
+
+app = FastAPI(title="Utility Aggregator API")
+
+# CORS middleware to allow frontend to call API
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, replace with actual frontend domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Initialize services
+reminder_service = ReminderService()
+alarm_service = AlarmService()
+
+# Create uploads directory if it doesn't exist
+os.makedirs("uploads", exist_ok=True)
+os.makedirs("uploads/pdf", exist_ok=True)
+
+# PDF Conversion endpoint
+@app.post("/api/convert-pdf")
+async def convert_pdf(file: UploadFile = File(...)):
+    try:
+        # Save uploaded file
+        file_extension = file.filename.split(".")[-1]
+        temp_file_path = f"uploads/{str(uuid.uuid4())}.{file_extension}"
+        
+        with open(temp_file_path, "wb") as buffer:
+            content = await file.read()
+            buffer.write(content)
+        
+        # Convert to PDF
+        pdf_path = await convert_to_pdf(temp_file_path)
+        
+        if not pdf_path:
+            raise HTTPException(status_code=400, detail="Could not convert file to PDF")
+        
+        # Return path to the PDF file
+        return {
+            "success": True,
+            "message": "File converted successfully",
+            "pdfUrl": f"/api/download/{os.path.basename(pdf_path)}"
+        }
+    except Exception as e:
+        print(f"Error converting to PDF: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Download endpoint for converted PDFs
+@app.get("/api/download/{filename}")
+async def download_file(filename: str):
+    file_path = f"uploads/pdf/{filename}"
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(file_path, media_type="application/pdf")
+
+# Reminder API models
+class ReminderCreate(BaseModel):
+    title: str
+    datetime: str
+    description: Optional[str] = None
+
+class Reminder(ReminderCreate):
+    id: str
+
+# Reminder endpoints
+@app.get("/api/reminders")
+async def get_reminders():
+    try:
+        reminders = reminder_service.get_all_reminders()
+        return {"success": True, "reminders": reminders}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/reminders")
+async def create_reminder(reminder: ReminderCreate, background_tasks: BackgroundTasks):
+    try:
+        new_reminder = reminder_service.create_reminder(reminder.dict())
+        # Schedule reminder in background
+        reminder_time = datetime.fromisoformat(reminder.datetime.replace('Z', '+00:00'))
+        background_tasks.add_task(
+            reminder_service.schedule_reminder, 
+            new_reminder["id"], 
+            reminder_time
+        )
+        return {"success": True, "reminder": new_reminder}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/reminders/{reminder_id}")
+async def delete_reminder(reminder_id: str):
+    try:
+        reminder_service.delete_reminder(reminder_id)
+        return {"success": True, "message": "Reminder deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Alarm API models
+class AlarmCreate(BaseModel):
+    time: str
+    label: str = "Alarm"
+    repeatDays: Dict[str, bool]
+    isActive: bool = True
+
+class Alarm(AlarmCreate):
+    id: str
+
+# Alarm endpoints
+@app.get("/api/alarms")
+async def get_alarms():
+    try:
+        alarms = alarm_service.get_all_alarms()
+        return {"success": True, "alarms": alarms}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/alarms")
+async def create_alarm(alarm: AlarmCreate, background_tasks: BackgroundTasks):
+    try:
+        new_alarm = alarm_service.create_alarm(alarm.dict())
+        # Schedule alarm if active
+        if alarm.isActive:
+            background_tasks.add_task(
+                alarm_service.schedule_alarm,
+                new_alarm["id"],
+                alarm.time,
+                alarm.repeatDays
+            )
+        return {"success": True, "alarm": new_alarm}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/alarms/{alarm_id}")
+async def delete_alarm(alarm_id: str):
+    try:
+        alarm_service.delete_alarm(alarm_id)
+        return {"success": True, "message": "Alarm deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.patch("/api/alarms/{alarm_id}")
+async def update_alarm(alarm_id: str, update_data: dict, background_tasks: BackgroundTasks):
+    try:
+        updated_alarm = alarm_service.update_alarm(alarm_id, update_data)
+        
+        # If alarm is toggled to active, schedule it
+        if "isActive" in update_data and update_data["isActive"]:
+            alarm = alarm_service.get_alarm(alarm_id)
+            background_tasks.add_task(
+                alarm_service.schedule_alarm,
+                alarm_id,
+                alarm["time"],
+                alarm["repeatDays"]
+            )
+        
+        return {"success": True, "alarm": updated_alarm}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+```
+
+## backend/pdf_converter.py
+```python
+import os
+from pdf_lib import Document
+import asyncio
+from typing import Optional
+import subprocess
+
+async def convert_to_pdf(file_path: str) -> Optional[str]:
+    """
+    Convert a file to PDF format
+    
+    Args:
+        file_path: Path to the file to convert
+        
+    Returns:
+        Path to the converted PDF file, or None if conversion fails
+    """
+    try:
+        file_name = os.path.basename(file_path)
+        file_name_without_ext = os.path.splitext(file_name)[0]
+        output_path = f"uploads/pdf/{file_name_without_ext}.pdf"
+        
+        file_extension = os.path.splitext(file_path)[1].lower()
+        
+        if file_extension in ['.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx']:
+            # Use LibreOffice or similar for Office documents
+            # This is a simplified example - in production, you would need LibreOffice installed
+            process = await asyncio.create_subprocess_exec(
+                'libreoffice', '--headless', '--convert-to', 'pdf', 
+                '--outdir', 'uploads/pdf', file_path,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            await process.communicate()
+            
+            if os.path.exists(output_path):
+                return output_path
+            return None
+            
+        elif file_extension in ['.txt', '.html', '.md']:
+            # Create a simple PDF from text-based files
+            doc = Document()
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            doc.add_page()
+            doc.add_text(content)
+            doc.save(output_path)
+            return output_path
+            
+        elif file_extension in ['.jpg', '.jpeg', '.png']:
+            # Convert image to PDF
+            doc = Document()
+            doc.add_page()
+            doc.add_image(file_path)
+            doc.save(output_path)
+            return output_path
+            
+        elif file_extension == '.pdf':
+            # Already a PDF, just copy it
+            with open(file_path, 'rb') as src, open(output_path, 'wb') as dst:
+                dst.write(src.read())
+            return output_path
+            
+        else:
+            # Unsupported format
+            return None
+            
+    except Exception as e:
+        print(f"Error converting file to PDF: {e}")
+        return None
+```
+
+## backend/reminder_service.py
+```python
+import uuid
+from datetime import datetime, timedelta
+import asyncio
+import json
+import os
+from typing import Dict, List, Optional
+import threading
+import time
+
+class ReminderService:
+    def __init__(self):
+        self.reminders = {}
+        self.scheduled_tasks = {}
+        self.data_file = "reminders.json"
+        self.load_reminders()
+        
+        # Start the reminder checker thread
+        self.checker_thread = threading.Thread(target=self._check_reminders, daemon=True)
+        self.checker_thread.start()
+    
+    def load_reminders(self):
+        """Load reminders from file"""
+        if os.path.exists(self.data_file):
+            try:
+                with open(self.data_file, 'r') as f:
+                    self.reminders = json.load(f)
+            except Exception as e:
+                print(f"Error loading reminders: {e}")
+                self.reminders = {}
+    
+    def save_reminders(self):
+        """Save reminders to file"""
+        try:
+            with open(self.data_file, 'w') as f:
+                json.dump(self.reminders, f)
+        except Exception as e:
+            print(f"Error saving reminders: {e}")
+    
+    def get_all_reminders(self) -> List[Dict]:
+        """Get all reminders"""
+        return [
+            {**reminder, "id": reminder_id} 
+            for reminder_id, reminder in self.reminders.items()
+        ]
+    
+    def create_reminder(self, reminder_data: Dict) -> Dict:
+        """Create a new reminder"""
+        reminder_id = str(uuid.uuid4())
+        self.reminders[reminder_id] = reminder_data
+        self.save_reminders()
+        return {**reminder_data, "id": reminder_id}
+    
+    def delete_reminder(self, reminder_id: str):
+        """Delete a reminder"""
+        if reminder_id in self.reminders:
+            del self.reminders[reminder_id]
+            self.save_reminders()
+            # Cancel scheduled task if exists
+            if reminder_id in self.scheduled_tasks:
+                self.scheduled_tasks[reminder_id].cancel()
+                del self.scheduled_tasks[reminder_id]
+    
+    def schedule_reminder(self, reminder_id: str, reminder_time: datetime):
+        """Schedule a reminder to trigger at the specified time"""
+        if reminder_id not in self.reminders:
+            return
+        
+        # Calculate seconds until reminder time
+        now = datetime.now()
+        time_diff = (reminder_time - now).total_seconds()
+        
+        if time_diff <= 0:
+            # Already passed, don't schedule
+            return
+        
+        # Schedule reminder notification
+        # In a real app, this would send a notification to the user
+        # For this example, we'll just print to console
+        def reminder_callback():
+            print(f"REMINDER: {self.reminders[reminder_id]['title']}")
+            # Here you would send a notification to the user
+        
+        timer = threading.Timer(time_diff, reminder_callback)
+        timer.daemon = True
+        timer.start()
+        
+        self.scheduled_tasks[reminder_id] = timer
+    
+    def _check_reminders(self):
+        """Background thread to check for upcoming reminders"""
+        while True:
+            try:
+                now = datetime.now()
+                for reminder_id, reminder in list(self.reminders.items()):
+                    reminder_time = datetime.fromisoformat(reminder['datetime'].replace('Z', '+00:00'))
+                    
+                    # If reminder is within the next minute and not already scheduled
+                    time_diff = (reminder_time - now).total_seconds()
+                    if 0 < time_diff < 60 and reminder_id not in self.scheduled_tasks:
+                        self.schedule_reminder(reminder_id, reminder_time)
+            except Exception as e:
+                print(f"Error checking reminders: {e}")
+            
+            # Sleep for a bit before checking again
+            time.sleep(30)
+```
+
+## backend/alarm_service.py
+```python
+import uuid
+import json
+import os
+import threading
+import time
+from datetime import datetime
+from typing import Dict, List, Optional
+
+class AlarmService:
+    def __init__(self):
+        self.alarms = {}
+        self.scheduled_tasks = {}
+        self.data_file = "alarms.json"
+        self.load_alarms()
+        
+        # Start the alarm checker thread
+        self.checker_thread = threading.Thread(target=self._check_alarms, daemon=True)
+        self.checker_thread.start()
+    
+    def load_alarms(self):
+        """Load alarms from file"""
+        if os.path.exists(self.data_file):
+            try:
+                with open(self.data_file, 'r') as f:
+                    self.alarms = json.load(f)
+            except Exception as e:
+                print(f"Error loading alarms: {e}")
+                self.alarms = {}
+    
+    def save_alarms(self):
+        """Save alarms to file"""
+        try:
+            with open(self.data_file, 'w') as f:
+                json.dump(self.alarms, f)
+        except Exception as e:
+            print(f"Error saving alarms: {e}")
+    
+    def get_all_alarms(self) -> List[Dict]:
+        """Get all alarms"""
+        return [
+            {**alarm, "id": alarm_id} 
+            for alarm_id, alarm in self.alarms.items()
+        ]
+    
+    def get_alarm(self, alarm_id: str) -> Optional[Dict]:
+        """Get a specific alarm"""
+        if alarm_id in self.alarms:
+            return {**self.alarms[alarm_id], "id": alarm_id}
+        return None
+    
+    def create_alarm(self, alarm_data: Dict) -> Dict:
+        """Create a new alarm"""
+        alarm_id = str(uuid.uuid4())
+        self.alarms[alarm_id] = alarm_data
+        self.save_alarms()
+        return {**alarm_data, "id": alarm_id}
+    
+    def update_alarm(self, alarm_id: str, update_data: Dict) -> Dict:
+        """Update an alarm"""
+        if alarm_id not in self.alarms:
+            raise Exception("Alarm not found")
+        
+        self.alarms[alarm_id] = {**self.alarms[alarm_id], **update_data}
+        self.save_alarms()
+        
+        # Cancel scheduled task if alarm is deactivated
+        if "isActive" in update_data and not update_data["isActive"]:
+            if alarm_id in self.scheduled_tasks:
+                self.scheduled_tasks[alarm_id].cancel()
+                del self.scheduled_tasks[alarm_id]
+        
+        return {**self.alarms[alarm_id], "id": alarm_id}
+    
+    def delete_alarm(self, alarm_id: str):
+        """Delete an alarm"""
+        if alarm_id in self.alarms:
+            del self.alarms[alarm_id]
+            self.save_alarms()
+            # Cancel scheduled task if exists
+            if alarm_id in self.scheduled_tasks:
+                self.scheduled_tasks[alarm_id].cancel()
+                del self.scheduled_tasks[alarm_id]
+    
+    def schedule_alarm(self, alarm_id: str, alarm_time: str, repeat_days: Dict[str, bool]):
+        """Schedule an alarm to trigger at the specified time"""
+        if alarm_id not in self.alarms:
+            return
+        
+        # Parse alarm time (format: HH:MM)
+        hour, minute = map(int, alarm_time.split(':'))
+        
+        # Calculate seconds until alarm time
+        now = datetime.now()
+        alarm_datetime = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+        
+        # If the alarm time has already passed today, set it for tomorrow
+        if alarm_datetime <= now:
+            alarm_datetime = alarm_datetime.replace(day=alarm_datetime.day + 1)
+        
+        # Check if this alarm should run on the scheduled day
+        weekday = alarm_datetime.strftime('%A').lower()
+        if repeat_days and not repeat_days.get(weekday, False):
+            # Skip this day, we'll check again tomorrow
+            return
+        
+        time_diff = (alarm_datetime - now).total_seconds()
+        
+        # Schedule alarm notification
+        # In a real app, this would send a notification to the user
+        def alarm_callback():
+            print(f"ALARM: {self.alarms[alarm_id]['label']} at {alarm_time}")
+            # Here you would trigger the alarm sound/notification
+            
+            # Reschedule for next occurrence if this is a repeating alarm
+            if any(repeat_days.values()):
+                self.schedule_alarm(alarm_id, alarm_time, repeat_days)
+        
+        timer = threading.Timer(time_diff, alarm_callback)
+        timer.daemon = True
+        timer.start()
+        
+        self.scheduled_tasks[alarm_id] = timer
+    
+    def _check_alarms(self):
+        """Background thread to check for upcoming alarms"""
+        while True:
+            try:
+                now = datetime.now()
+                for alarm_id, alarm in list(self.alarms.items()):
+                    if not alarm.get('isActive', True):
+                        continue
+                    
+                    # Parse alarm time
+                    hour, minute = map(int, alarm['time'].split(':'))
+                    alarm_datetime = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+                    
+                    # If the alarm time has already passed today, set it for tomorrow
+                    if alarm_datetime <= now:
+                        alarm_datetime = alarm_datetime.replace(day=alarm_datetime.day + 1)
+                    
+                    # Check if alarm should run on this day
+                    weekday = alarm_datetime.strftime('%A').lower()
+                    if alarm['repeatDays'] and not alarm['repeatDays'].get(weekday, False):
+                        continue
+                    
+                    # If alarm is within the next minute and not already scheduled
+                    time_diff = (alarm_datetime - now).total_seconds()
+                    if 0 < time_diff < 60 and alarm_id not in self.scheduled_tasks:
+                        self.schedule_alarm(alarm_id, alarm['time'], alarm['repeatDays'])
+            except Exception as e:
+                print(f"Error checking alarms: {e}")
+            
+            # Sleep for a bit before checking again
+            time.sleep(30)
+```
+
+## requirements.txt
+```
+fastapi==0.103.1
+uvicorn==0.23.2
+python-multipart==0.0.6
+pydantic==2.3.0
+pdf-lib==0.1.0
+```
+
+## README.md
+```markdown
+# Utility Aggregator Platform
+
+A simple web application that aggregates various utility tools including PDF conversion, reminders, alarms, and a mindfulness tool.
+
+## Features
+
+- **PDF Conversion**: Convert files to PDF format
+- **Reminders**: Set and manage reminders
+- **Alarms**: Set alarms with customizable repeat options
+- **Just Breathe**: A mindfulness tool with breathing exercises
+
+## Tech Stack
+
+- **Frontend**: Next.js (React framework with SSR)
+- **Backend**: Python with FastAPI
+- **Additional Libraries**:
+  - `react-toastify` for notifications
+  - `pdf-lib` for PDF conversion
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js (v14+)
+- Python (v3.8+)
+- pip
+
+### Installation
+
+#### Frontend
+
+1. Navigate to the project root directory and install dependencies:
+
+```bash
+npm install
+```
+
+2. Start the development server:
+
+```bash
+npm run dev
+```
+
+#### Backend
+
+1. Set up a Python virtual environment (recommended):
+
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+2. Install Python dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+3. Start the backend server:
+
+```bash
+cd backend
+python app.py
+```
+
+## Usage
+
+After starting both the frontend and backend servers, navigate to http://localhost:3000 in your browser to use the application.
+
+## Project Structure
+
+- `/pages`: Next.js pages for each utility
+- `/components`: Reusable React components
+- `/styles`: CSS styles using Tailwind CSS
+- `/backend`: Python FastAPI backend services
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+```

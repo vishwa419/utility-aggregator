@@ -1,0 +1,211 @@
+/* Apply default styles to ensure consistent layout and design */
+html, body {
+  font-family: 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  min-height: 100vh;
+  background-color: #f8fafc; /* Light background for better contrast */
+  color: #333333; /* Dark text color for readability */
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  padding-top: 20px; /* Add some space on top */
+}
+
+/* Utility classes for the main container and page layout */
+.container {
+  max-width: 1200px;
+  width: 100%;
+  padding: 0 15px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+h1, h2, h3 {
+  font-weight: 600;
+  color: #1f2937; /* Darker color for headings */
+  margin-bottom: 16px;
+}
+
+h1 {
+  font-size: 3rem; /* Large font size for primary headers */
+}
+
+h2 {
+  font-size: 2rem;
+}
+
+h3 {
+  font-size: 1.5rem;
+}
+
+/* Buttons */
+button {
+  background-color: #3b82f6; /* Primary button color */
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+button:hover {
+  background-color: #2563eb; /* Darker shade on hover */
+  transform: scale(1.05); /* Slight scale effect on hover */
+}
+
+/* Links */
+a {
+  color: #3b82f6; /* Default link color */
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: #2563eb; /* Darker color on hover */
+}
+
+/* Input fields */
+input[type="text"], input[type="email"], input[type="password"], textarea {
+  padding: 12px;
+  font-size: 1rem;
+  border: 1px solid #e2e8f0; /* Light border for inputs */
+  border-radius: 8px;
+  width: 100%;
+  max-width: 500px; /* Limit max width for better control */
+  margin-bottom: 16px;
+  box-sizing: border-box;
+}
+
+input:focus, textarea:focus {
+  border-color: #3b82f6; /* Blue border on focus */
+  outline: none;
+}
+
+/* Toast notifications */
+.toastify {
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 350px;
+  color: #fff;
+}
+
+.toastify-success {
+  background-color: #10b981; /* Green for success messages */
+}
+
+.toastify-error {
+  background-color: #ef4444; /* Red for error messages */
+}
+
+/* Modals */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5); /* Transparent overlay */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal {
+  background-color: white;
+  padding: 30px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Utility classes for flexbox and grid */
+.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.flex-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+/* Spacing Utilities */
+.mt-8 {
+  margin-top: 2rem;
+}
+
+.mb-8 {
+  margin-bottom: 2rem;
+}
+
+.px-4 {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.py-4 {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+/* Add animations for smooth transitions */
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2.5rem;
+  }
+
+  .container {
+    padding: 0 20px;
+  }
+
+  .modal {
+    width: 100%;
+    padding: 20px;
+  }
+}
+
