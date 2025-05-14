@@ -1,5 +1,3 @@
-
-```markdown
 # Utility Aggregator Platform
 
 ## Overview
